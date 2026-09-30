@@ -17,7 +17,7 @@ Services: auth-service, venue-service, booking-service, gateway. Frontend: Angul
 - Angular frontend calls ONLY the gateway (localhost:3000), never a service directly.
 
 ## Third-party integrations
-- Google Maps API key lives in venue-service/.env as GOOGLE_MAPS_API_KEY. Never commit it.
+- Geoapify API key lives in venue-service/.env as GEOAPIFY_API_KEY. Never commit it.
 - Razorpay keys live in booking-service/.env as RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET. Use TEST mode keys only during development.
 - Every Razorpay webhook handler MUST verify the webhook signature before trusting the payload.
 
