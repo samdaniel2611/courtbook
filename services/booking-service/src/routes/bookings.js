@@ -1,11 +1,42 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const axios = require('axios');
+const Razorpay = require('razorpay');
 const Booking = require('../models/Booking');
 const requireAuth = require('../middleware/auth');
 
 const router = express.Router();
 router.use(requireAuth);
+
+router.post('/:id/pay', async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ error: 'Invalid booking id' });
+  try {
+    const booking = await Booking.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    if (booking.status !== 'pending') return res.status(409).json({ error: 'Booking is not pending' });
+    if (!booking.razorpayOrderId) {
+      let order;
+      try {
+        const razorpay = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET });
+        order = await razorpay.orders.create({
+          amount: booking.depositAmount,
+          currency: 'INR',
+          receipt: booking.id,
+          notes: { bookingId: booking.id },
+        });
+      } catch (_err) {
+        console.error('Razorpay order creation failed');
+        return res.status(502).json({ error: 'Payment service unavailable' });
+      }
+      booking.razorpayOrderId = order.id;
+      await booking.save();
+    }
+    return res.json({ orderId: booking.razorpayOrderId, amount: booking.depositAmount, currency: 'INR', keyId: process.env.RAZORPAY_KEY_ID });
+  } catch (_err) {
+    console.error('Payment request failed');
+    return res.status(500).json({ error: 'Something went wrong' });
+  }
+});
 
 function isValidStart(value) {
   if (typeof value !== 'string') return false;
@@ -34,6 +65,11 @@ router.post('/', async (req, res) => {
   const start = new Date(startsAt);
   const end = new Date(start.getTime() + 60 * 60 * 1000);
   try {
+    const ttlMinutes = Number(process.env.PENDING_TTL_MINUTES) || 15;
+    await Booking.updateMany({
+      courtId: courtId.trim(), startsAt: start, status: 'pending', razorpayPaymentId: { $in: [null] },
+      createdAt: { $lt: new Date(Date.now() - ttlMinutes * 60 * 1000) },
+    }, { $set: { status: 'cancelled' } });
     const existing = await Booking.exists({ courtId: courtId.trim(), startsAt: start, status: { $in: ['pending', 'confirmed'] } });
     if (existing) return res.status(409).json({ error: 'Slot already booked' });
 

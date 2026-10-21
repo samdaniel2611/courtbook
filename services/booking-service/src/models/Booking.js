@@ -9,6 +9,9 @@ const bookingSchema = new mongoose.Schema(
     endsAt: { type: Date, required: true },
     depositAmount: { type: Number, default: () => Number(process.env.DEPOSIT_PAISE) || 5000 },
     status: { type: String, enum: ['pending', 'confirmed', 'cancelled'], default: 'pending' },
+    razorpayOrderId: { type: String },
+    razorpayPaymentId: { type: String },
+    paidAt: { type: Date },
   },
   { timestamps: true }
 );
