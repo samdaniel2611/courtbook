@@ -3,6 +3,7 @@ const cors = require('cors');
 const crypto = require('crypto');
 const Booking = require('./models/Booking');
 const bookingRoutes = require('./routes/bookings');
+const { publishBookingConfirmed } = require('./events');
 
 const app = express();
 app.use(cors());
@@ -41,6 +42,11 @@ app.post('/webhooks/razorpay', express.raw({ type: 'application/json' }), async 
     booking.razorpayPaymentId = payment.id;
     booking.paidAt = new Date();
     await booking.save();
+    try {
+      await publishBookingConfirmed(booking);
+    } catch (_err) {
+      console.error('Booking confirmation event publish failed');
+    }
     return res.sendStatus(200);
   } catch (_err) {
     console.error('Razorpay webhook processing failed');

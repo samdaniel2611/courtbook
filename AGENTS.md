@@ -15,6 +15,9 @@ Services: auth-service, venue-service, booking-service, gateway. Frontend: Angul
 - booking-service must never call venue-service's database directly. Use an HTTP call to venue-service's API to fetch court details.
 - All inter-service calls go through explicit HTTP calls (axios), never direct imports across service folders.
 - Angular frontend calls ONLY the gateway (localhost:3000), never a service directly.
+- Services communicate asynchronously only through RabbitMQ events (exchange "courtbook.events", routing keys like "booking.confirmed"). Never share code between services.
+- Publishing an event must never make a request fail after the database change has succeeded; log a short message instead.
+- RabbitMQ URLs come from RABBITMQ_URL in .env. Never log credentials.
 
 ## Third-party integrations
 - Geoapify API key lives in venue-service/.env as GEOAPIFY_API_KEY. Never commit it.
