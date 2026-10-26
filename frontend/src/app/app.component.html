@@ -1,0 +1,12 @@
+<header class="topbar">
+  <a class="brand" routerLink="/courts">CourtBook</a>
+  <nav aria-label="Account">
+    @if (auth.isLoggedIn()) {
+      <button type="button" (click)="logout()">Logout</button>
+    } @else {
+      <a routerLink="/login">Login</a>
+      <a routerLink="/register">Register</a>
+    }
+  </nav>
+</header>
+<main><router-outlet /></main>

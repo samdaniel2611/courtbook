@@ -1,0 +1,7 @@
+:host { display: block; min-height: 100vh; }
+.topbar { height: 68px; padding: 0 max(1.5rem, calc((100vw - 1120px) / 2)); display: flex; align-items: center; justify-content: space-between; background: #fff; border-bottom: 1px solid #e2e8f0; }
+.brand { color: #0f172a; font-size: 1.2rem; font-weight: 750; letter-spacing: -.03em; text-decoration: none; }
+nav { display: flex; align-items: center; gap: 1.25rem; }
+nav a, nav button { color: #334155; font: inherit; text-decoration: none; }
+nav button { padding: .5rem .85rem; border: 1px solid #cbd5e1; border-radius: 7px; background: white; cursor: pointer; }
+main { width: min(100% - 2rem, 1120px); margin: 0 auto; }

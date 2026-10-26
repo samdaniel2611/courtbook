@@ -29,3 +29,8 @@ Services: auth-service, venue-service, booking-service, gateway. Frontend: Angul
 - Never hard-code API keys, database URIs, or JWT secrets. Use .env files (see .env.example).
 - Never commit .env or real API keys.
 - Never mark a booking "confirmed" without a verified Razorpay webhook signature.
+
+## Frontend
+- Frontend (frontend/): the Angular app calls ONLY the gateway at http://localhost:3000, never a service directly. Standalone components, strict TypeScript, no `any`.
+- Never put secrets in the frontend. The Razorpay key id comes from the API response; the Razorpay key secret and webhook secret never appear in frontend code.
+- The frontend never marks a booking as confirmed; only the webhook does. After payment it re-fetches the booking and shows its real status.
