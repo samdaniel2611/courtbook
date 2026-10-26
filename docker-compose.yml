@@ -1,0 +1,82 @@
+services:
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  auth-service:
+    build: ./services/auth-service
+    env_file: ./services/auth-service/.env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/auth_db
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  venue-service:
+    build: ./services/venue-service
+    env_file: ./services/venue-service/.env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/venue_db
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  booking-service:
+    build: ./services/booking-service
+    env_file: ./services/booking-service/.env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/booking_db
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      VENUE_SERVICE_URL: http://venue-service:4002
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  gateway:
+    build: ./services/gateway
+    env_file: ./services/gateway/.env
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:4001
+      VENUE_SERVICE_URL: http://venue-service:4002
+      BOOKING_SERVICE_URL: http://booking-service:4003
+    ports:
+      - "3000:3000"
+    depends_on:
+      auth-service:
+        condition: service_started
+      venue-service:
+        condition: service_started
+      booking-service:
+        condition: service_started
+
+  notification-service:
+    build: ./services/notification-service
+    env_file: ./services/notification-service/.env
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+volumes:
+  mongo_data:
