@@ -43,4 +43,8 @@ export class CourtService {
     if (sport) params = params.set('sport', sport);
     return this.http.get<Court[]>(`${apiBaseUrl}/venues/nearby`, { params });
   }
+
+  getCourt(id: string): Observable<Court> {
+    return this.http.get<Court>(`${apiBaseUrl}/venues/${encodeURIComponent(id)}`);
+  }
 }

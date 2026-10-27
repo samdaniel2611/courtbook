@@ -10,12 +10,14 @@ const mongoose = require('mongoose');
 const request = require('supertest');
 const app = require('../src/app');
 const Booking = require('../src/models/Booking');
+const { isOnTheHour } = require('../src/time');
 
 const tokenFor = (sub, secret = process.env.JWT_SECRET) => jwt.sign({ email: `${sub}@example.test` }, secret, { subject: sub });
 const auth = (sub = 'user-1') => `Bearer ${tokenFor(sub)}`;
 const nextHour = () => {
   const date = new Date();
-  date.setUTCHours(date.getUTCHours() + 2, 0, 0, 0);
+  date.setTime(Date.now() + 2 * 60 * 60 * 1000);
+  date.setUTCMinutes(30, 0, 0);
   return date.toISOString();
 };
 const court = { _id: 'court-1', name: 'Center Court' };
@@ -50,6 +52,27 @@ describe('booking authentication', () => {
 });
 
 describe('POST /bookings', () => {
+  test('validates the local venue hour while storing the equivalent UTC instant', async () => {
+    const response = await request(app).post('/bookings').set('Authorization', auth()).send({ courtId: 'court-1', startsAt: '2026-12-12T04:30:00.000Z' }).expect(201);
+    expect(response.body.startsAt).toBe('2026-12-12T04:30:00.000Z');
+  });
+
+  test('rejects a UTC hour that is half past the hour in the venue timezone', async () => {
+    await request(app).post('/bookings').set('Authorization', auth()).send({ courtId: 'court-1', startsAt: '2026-12-12T10:00:00.000Z' })
+      .expect(400, { error: 'startsAt must be a future ISO date exactly on the hour in Asia/Kolkata' });
+  });
+
+  test('isOnTheHour handles UTC and half-hour zones independent of machine timezone', () => {
+    const indiaHour = new Date('2026-12-12T04:30:00.000Z');
+    expect(isOnTheHour(indiaHour, 'Asia/Kolkata')).toBe(true);
+    expect(isOnTheHour(indiaHour, 'UTC')).toBe(false);
+    expect(isOnTheHour(new Date('2026-12-12T10:00:00.000Z'), 'UTC')).toBe(true);
+    const previousTimezone = process.env.TZ;
+    process.env.TZ = 'America/Los_Angeles';
+    try { expect(isOnTheHour(indiaHour, 'Asia/Kolkata')).toBe(true); }
+    finally { if (previousTimezone === undefined) delete process.env.TZ; else process.env.TZ = previousTimezone; }
+  });
+
   test('creates a pending booking with server-owned values', async () => {
     const startsAt = nextHour();
     const response = await request(app).post('/bookings').set('Authorization', auth()).send({ courtId: 'court-1', startsAt }).expect(201);
@@ -74,7 +97,9 @@ describe('POST /bookings', () => {
   test.each([
     ['missing courtId', { startsAt: '2030-01-01T10:00:00.000Z' }],
     ['bad date', { courtId: 'court-1', startsAt: 'not-a-date' }],
-    ['not on the hour', { courtId: 'court-1', startsAt: '2030-01-01T10:30:00.000Z' }],
+    ['not on the hour', { courtId: 'court-1', startsAt: '2030-01-01T10:00:00.000Z' }],
+    ['non-zero seconds', { courtId: 'court-1', startsAt: '2030-01-01T04:30:01.000Z' }],
+    ['non-zero milliseconds', { courtId: 'court-1', startsAt: '2030-01-01T04:30:00.001Z' }],
     ['past date', { courtId: 'court-1', startsAt: '2000-01-01T10:00:00.000Z' }],
   ])('returns 400 for %s', async (_label, body) => {
     await request(app).post('/bookings').set('Authorization', auth()).send(body).expect(400);

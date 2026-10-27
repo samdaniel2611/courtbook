@@ -12,6 +12,8 @@ export class CourtMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() courts: Court[] = [];
   @Input() center: [number, number] = [0, 0];
   @Input() selectedId: string | null = null;
+  @Input() readOnly = false;
+  @Input() zoom = 13;
   @Output() courtSelected = new EventEmitter<string>();
   @Output() centerChanged = new EventEmitter<[number, number]>();
   private readonly courtIcon = L.icon({
@@ -27,7 +29,7 @@ export class CourtMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   private readonly markers = new Map<string, L.Marker>();
 
   ngAfterViewInit(): void {
-    this.map = L.map(this.mapElement.nativeElement).setView(this.center, 13);
+    this.map = L.map(this.mapElement.nativeElement, { zoomControl: !this.readOnly, dragging: !this.readOnly, scrollWheelZoom: !this.readOnly, doubleClickZoom: !this.readOnly, boxZoom: !this.readOnly, keyboard: !this.readOnly, touchZoom: !this.readOnly }).setView(this.center, this.zoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
       maxZoom: 19

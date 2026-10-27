@@ -23,7 +23,8 @@ const tokenFor = (sub) => jwt.sign({ email: `${sub}@example.test` }, process.env
 const auth = (sub = 'owner') => `Bearer ${tokenFor(sub)}`;
 const startAt = () => {
   const date = new Date();
-  date.setUTCHours(date.getUTCHours() + 2, 0, 0, 0);
+  date.setTime(Date.now() + 2 * 60 * 60 * 1000);
+  date.setUTCMinutes(30, 0, 0);
   return date;
 };
 const makeBooking = (fields = {}) => {

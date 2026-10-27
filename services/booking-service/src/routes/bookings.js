@@ -4,8 +4,10 @@ const axios = require('axios');
 const Razorpay = require('razorpay');
 const Booking = require('../models/Booking');
 const requireAuth = require('../middleware/auth');
+const { isOnTheHour } = require('../time');
 
 const router = express.Router();
+const venueTimezone = process.env.VENUE_TIMEZONE || 'Asia/Kolkata';
 router.use(requireAuth);
 
 router.post('/:id/pay', async (req, res) => {
@@ -42,14 +44,14 @@ function isValidStart(value) {
   if (typeof value !== 'string') return false;
   const date = new Date(value);
   return Number.isFinite(date.getTime()) &&
-    /^\d{4}-\d\d-\d\dT\d\d:00:00(?:\.000)?(?:Z|[+-]\d\d:\d\d)$/.test(value) &&
-    date.getTime() > Date.now();
+    /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?(?:Z|[+-]\d\d:\d\d)$/.test(value) &&
+    isOnTheHour(date, venueTimezone) && date.getTime() > Date.now();
 }
 
 router.post('/', async (req, res) => {
   const { courtId, startsAt } = req.body || {};
   if (typeof courtId !== 'string' || !courtId.trim()) return res.status(400).json({ error: 'courtId is required' });
-  if (!isValidStart(startsAt)) return res.status(400).json({ error: 'startsAt must be a future ISO date exactly on the hour' });
+  if (!isValidStart(startsAt)) return res.status(400).json({ error: `startsAt must be a future ISO date exactly on the hour in ${venueTimezone}` });
 
   let court;
   try {
