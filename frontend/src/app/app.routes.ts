@@ -3,6 +3,7 @@ import { authGuard } from './auth.guard';
 import { AuthPageComponent } from './pages/auth-page.component';
 import { CourtDetailComponent, CourtsPageComponent } from './pages/courts-page.component';
 import { BookingResultComponent } from './pages/booking-result.component';
+import { BookingsPageComponent } from './pages/bookings-page.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'courts' },
@@ -10,6 +11,7 @@ export const routes: Routes = [
   { path: 'register', component: AuthPageComponent, data: { mode: 'register' } },
   { path: 'courts', component: CourtsPageComponent, canActivate: [authGuard] },
   { path: 'courts/:id', component: CourtDetailComponent, canActivate: [authGuard] },
+  { path: 'bookings', component: BookingsPageComponent, canActivate: [authGuard] },
   { path: 'bookings/:id', component: BookingResultComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: 'courts' }
 ];
