@@ -29,9 +29,25 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "marker-icon*.png",
+                "input": "node_modules/leaflet/dist/images",
+                "output": "leaflet"
+              },
+              {
+                "glob": "marker-shadow.png",
+                "input": "node_modules/leaflet/dist/images",
+                "output": "leaflet"
+              },
+              {
+                "glob": "layers*.png",
+                "input": "node_modules/leaflet/dist/images",
+                "output": "leaflet"
               }
             ],
             "styles": [
+              "node_modules/leaflet/dist/leaflet.css",
               "src/styles.scss"
             ],
             "scripts": []
@@ -88,9 +104,25 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "marker-icon*.png",
+                "input": "node_modules/leaflet/dist/images",
+                "output": "leaflet"
+              },
+              {
+                "glob": "marker-shadow.png",
+                "input": "node_modules/leaflet/dist/images",
+                "output": "leaflet"
+              },
+              {
+                "glob": "layers*.png",
+                "input": "node_modules/leaflet/dist/images",
+                "output": "leaflet"
               }
             ],
             "styles": [
+              "node_modules/leaflet/dist/leaflet.css",
               "src/styles.scss"
             ],
             "scripts": []
